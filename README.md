@@ -32,7 +32,7 @@ Approach 1(Fully reinforcement learning):
 The general approach is to use a deep learning neural net as the heuristic value of a monte carlo tree search:
 1. A neural net is chosen with randomized weights. Ex: Resnet50
 2. MCTS value of each legal move is determined by playing out many games from that move. Ex 100 playouts
-3. The DCNN chooses moves with the highest value within simulated playouts(Neural net has one output node)
+3. The DCNN chooses moves with the highest value within simulated playouts(Neural net has one output node). Alternatively, it predicts a probability distribution of highest value moves.
 4. DCNN backpropogation with the new MCTS value
 5. Repeat 2-4 for many moves and games
 
