@@ -28,26 +28,94 @@ def fakeNN(board):
         randomlist = [number / total for number in randomlist]
         return randomlist, random.uniform(-1, 1)
     else:
-        return []
+        return [], -10
+
+
+
+def convert_to_int(board):
+    mapped = {
+        'P': 1,     # White Pawn
+        'p': -1,    # Black Pawn
+        'N': 3,     # White Knight
+        'n': -3,    # Black Knight
+        'B': 3,     # White Bishop
+        'b': -3,    # Black Bishop
+        'R': 5,     # White Rook
+        'r': -5,    # Black Rook
+        'Q': 9,     # White Queen
+        'q': -9,    # Black Queen
+        'K': 100,     # White King
+        'k': -100     # Black King
+        }
+    epd_string = board.epd()
+    list_int = []
+    for i in epd_string:
+        if i == " ":
+            return list_int
+        elif i != "/":
+            if i in mapped.keys():
+                list_int.append(mapped[i])
+            else:
+                for counter in range(0, int(i)):
+                    list_int.append(0)
+
+def boardScore(board):
+    score = sum(convert_to_int(board))
+    if not board.turn:
+        score = -1 * score
+    newScore = score
+    if score > 9:
+        newScore = 9
+    if score < -9:
+        newScore = -9
+    posVal = newScore/9
+    return score, posVal
+
+def betterFakeNN(board):
+    moveList = [move for move in board.legal_moves]
+    curScore = -math.inf
+    moveIdx = []
+    posVal = 0
+    for x in range(0, len(moveList)):
+        moveToTake = str(moveList[x])
+        board.push_san(moveToTake)
+        newScore, newPosVal = boardScore(board)
+        if (newScore > curScore):
+            moveIdx = [x]
+            curScore = newScore
+            posVal = newPosVal
+        if (newScore==curScore):
+            moveIdx.append(x)
+        board.pop()
+    num_moves = board.legal_moves.count()
+    moveProbs = [0] * num_moves
+    for move in moveIdx:
+        moveProbs[move] = 1/len(moveIdx)
+    return moveProbs, posVal
+
+
 
 
 def MCTS(n, verbose):
     children = n.children
     if(children == []):
-        prior_p, state_val = fakeNN(n.board)
-        moveList = [move for move in n.board.legal_moves]
-        for x in range(0, len(moveList)):
-            moveToTake = str(moveList[x])
-            n.board.push_san(moveToTake)
-            node = Node(n.board.copy(), [0, 0, 0, prior_p[x]])
-            n.children.append(node)
-            node.parent.append(n)
-            node.prior_p = prior_p[x]
-            n.board.pop()
-            if verbose==True:
-               print(node.board)
-        n.visit_ct +=1
-        return state_val
+        if(n.board.is_game_over()):
+            return n.board.result()
+        else:
+            prior_p, state_val = betterFakeNN(n.board)
+            moveList = [move for move in n.board.legal_moves]
+            for x in range(0, len(moveList)):
+                moveToTake = str(moveList[x])
+                n.board.push_san(moveToTake)
+                node = Node(n.board.copy(), [0, 0, 0, prior_p[x]])
+                n.children.append(node)
+                node.parent.append(n)
+                node.prior_p = prior_p[x]
+                n.board.pop()
+                if verbose==True:
+                    print(node.board)
+            n.visit_ct +=1
+            return state_val
     #Keep recursing. First pick child to maximize Q+U. Second rootnode +=MCTS(child node), visit_ct +1,update total_val and mean_val.
     else:
         maxQU = -1
@@ -67,5 +135,5 @@ def MCTS(n, verbose):
 board = chess.Board()
 node = Node(board, [0,0,0,0])
 for x in range(16000):
-    MCTS(node, False)
+     MCTS(node, False)
 MCTS(node, True)
