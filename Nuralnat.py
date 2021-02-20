@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torchvision
 import torchvision.transforms as transforms
+import chess
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -41,7 +42,33 @@ class AmnomZero(nn.Module):
         self.bn = nn.BatchNorm2d(filters)
         self.relu = nn.ReLU(inplace=True)
         self.layer = self.make_layer(residLayer, filters, layers)
-        #add value and policy head
+
+        # policy head
+
+        self.conv_p = nn.Conv2d(self.in_channels, 73, kernel_size=1)
+        self.bn_p = nn.BatchNorm2d(73)
+        self.relu_p = nn.ReLU(inplace=True)
+        self.flatten_p = nn.Flatten()
+
+        # value head
+
+        self.conv_v = nn.Conv2d(self.in_channels, 1, kernel_size=1)
+        self.bn_v = nn.BatchNorm2d(1)
+        self.relu_v = nn.ReLU(inplace=True)
+        self.layer_v = nn.linear(64, 32)
+        self.relu2_v = nn.ReLU(inplace=True)
+        self.layer2_v = nn.linear(32, 1)
+        self.tanh_v = nn.Tanh()
+        
+
+    def make_layer(self, residLayer, out_channels, layers, stride=1):
+        layers = []
+        for x in range(0, layers):
+            layers.append(residLayer(self.in_channels, out_channels))
+
+        return nn.Sequential(*layers)
+
+
         #add function for making residual layers
 
 #Make our own loss function? also maybe not in here. Maybe this is just the nurlnat
