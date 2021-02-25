@@ -21,9 +21,9 @@ class ResidualLayer(nn.Module):
         self.conv2 = nn.Conv2d(in_channels, out_channels, kernel_size = 3, padding = 1)
         self.bn2 = nn.BatchNorm2d(out_channels)
 
-    def forward(self, x):
-        residual = x
-        out = self.conv1(x)
+    def forward(self, data):
+        residual = data
+        out = self.conv1(data)
         out = self.bn1(out)
         out = self.relu(out)
         out = self.conv2(out)
@@ -44,11 +44,15 @@ class AmnomZero(nn.Module):
         self.layer = self.make_layer(residLayer, filters, layers)
 
         # policy head
+        # possibly bad, maybe more lairs?
+        self.conv_p1 = nn.Conv2d(self.in_channels, filters, kernel_size=1)
+        self.bn_p1 = nn.BatchNorm2d(filters)
+        self.relu_p1 = nn.ReLU(inplace=True)
 
-        self.conv_p = nn.Conv2d(self.in_channels, 73, kernel_size=1)
-        self.bn_p = nn.BatchNorm2d(73)
-        self.relu_p = nn.ReLU(inplace=True)
-        self.flatten_p = nn.Flatten()
+        self.conv_p2 = nn.Conv2d(self.in_channels, 73, kernel_size=1)
+        self.bn_p2 = nn.BatchNorm2d(73)
+        self.relu_p2 = nn.ReLU(inplace=True)
+        self.flatten_p2 = nn.Flatten()
 
         # value head
 
@@ -68,8 +72,22 @@ class AmnomZero(nn.Module):
 
         return nn.Sequential(*layers)
 
+    def forward(self, data):
+        out = self.conv(data)
+        out = self.bn(data)
+        out = self.relu(data)
+        out = self.layer(data)
 
-        #add function for making residual layers
+        pout = self.conv_p1(out)
+        pout = self.bn_p1(pout)
+        pout = self.relu_p1(pout)
+        pout = self.conv_p2(out)
+        pout = self.bn_p2(pout)
+        pout = self.relu_p2(pout)
+        pout = self.flatten_p2(pout)
+
+        vout = self.conv_v(data)
+
 
 #Make our own loss function? also maybe not in here. Maybe this is just the nurlnat
 #training loop is hard but maybe not in here
