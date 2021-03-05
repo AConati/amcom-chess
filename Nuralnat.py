@@ -1,8 +1,10 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 import torchvision
 import torchvision.transforms as transforms
 import chess
+from move_mask import move_mask
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -51,14 +53,15 @@ class AmnomZero(nn.Module):
 
         self.conv_p2 = nn.Conv2d(self.in_channels, 73, kernel_size=1)
         self.bn_p2 = nn.BatchNorm2d(73)
+        #Arbitrarily define what layers mean
         self.relu_p2 = nn.ReLU(inplace=True)
         self.flatten_p2 = nn.Flatten()
 
         # value head
-
         self.conv_v = nn.Conv2d(self.in_channels, 1, kernel_size=1)
         self.bn_v = nn.BatchNorm2d(1)
         self.relu_v = nn.ReLU(inplace=True)
+        self.flatten_v = nn.Flatten()
         self.layer_v = nn.linear(64, 32)
         self.relu2_v = nn.ReLU(inplace=True)
         self.layer2_v = nn.linear(32, 1)
@@ -74,19 +77,31 @@ class AmnomZero(nn.Module):
 
     def forward(self, data):
         out = self.conv(data)
-        out = self.bn(data)
-        out = self.relu(data)
-        out = self.layer(data)
+        out = self.bn(out)
+        out = self.relu(out)
+        out = self.layer(out)
 
         pout = self.conv_p1(out)
         pout = self.bn_p1(pout)
         pout = self.relu_p1(pout)
-        pout = self.conv_p2(out)
+        pout = self.conv_p2(pout)
         pout = self.bn_p2(pout)
         pout = self.relu_p2(pout)
         pout = self.flatten_p2(pout)
+        #Policy gets a lil craaazy. Call movemask to mask the illegal moves
+        pout = move_mask(pout)
+        pout = F.softmax(pout)
 
-        vout = self.conv_v(data)
+        vout = self.conv_v(out)
+        vout = self.bn_v(vout)
+        vout = self.relu_v(vout)
+        vout = self.flatten_v(vout)
+        vout = self.layer_v(vout)
+        vout = self.relu2_v(vout)
+        vout = self.layer2_v(vout)
+        vout = self.tanh_v(vout)
+
+        return pout, vout
 
 
 #Make our own loss function? also maybe not in here. Maybe this is just the nurlnat

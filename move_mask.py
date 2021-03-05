@@ -1,11 +1,15 @@
 import chess
 
-board = chess.Board()
-legal_moves = board.legal_moves
 
-# moves in form eg. 'g1h3'
-for move in legal_moves:
-    chess.Move.uci(move)
+#Return the full vector of moves with illegal moves set to 0
+def move_mask(pout):
+    board = chess.Board()
+    legal_moves = board.legal_moves
+
+    # moves in form eg. 'g1h3'
+    for move in legal_moves:
+        chess.Move.uci(move)
+    return pout
 
 
 #We have a stack 8*8*73 where each 8*8 plane represents a move(eg knight 2 left 1 up). Flattened to 4672*1. 
