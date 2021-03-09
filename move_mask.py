@@ -52,8 +52,6 @@ def find_plane(move):
                 plane = 62
             else:
                 plane = 63
-        pass
-
     # Queen move
 
     if h_dist == 0 and v_dist > 0:
