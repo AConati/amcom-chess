@@ -21,6 +21,8 @@ def move_mask(pout):
 
 # return plane
 def find_plane(move):
+    #Initialize plane to -1 to catch errors
+    plane = -1
     if(len(move) > 4):
         # promotion
         pass
@@ -28,15 +30,35 @@ def find_plane(move):
     h_dist = ranks[move[0]] - ranks[move[2]]
     v_dist = int(move[1]) - int(move[3])
 
+#Knight moves. First Knight plane is 57, I assigned them clockwise
     if h_dist != 0 and v_dist != 0 and h_dist != v_dist:
-        # knight move
+        if v_dist == 2:
+            if h_dist == 1:
+                plane = 57
+            else:
+                plane = 64
+        if h_dist == 2:
+            if v_dist == 1:
+                plane = 58
+            else:
+                plane = 59
+        if v_dist == -2:
+            if h_dist == 1:
+                plane = 60
+            else:
+                plane = 61
+        if h_dist == -2:
+            if v_dist == -1:
+                plane = 62
+            else:
+                plane = 63
         pass
 
     # Queen move
 
     if h_dist == 0 and v_dist > 0:
         pass
-
+    return plane
 
 
 
