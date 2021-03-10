@@ -1,27 +1,28 @@
 import chess
-
+import numpy
 ranks = {'a': 1, 'b': 2, 'c': 3, 'd': 4, 'e': 5, 'f': 6, 'g': 7, 'h': 8}
 
-# Return the list of legal moves, vector of move probabilities for each legal move
+# Return the list of legal moves, vector of move activations for each legal move
 def move_mask(pout):
     board = chess.Board()
     legal_moves = board.legal_moves
 
     # moves in form eg. 'g1h3'
     legal_moves = [chess.Move.uci(move) for move in legal_moves]
-    move_probabilities = []
+    move_values = []
 
     for move in legal_moves:
         x = ranks[move[0]]
         y = int(move[1])
         plane = find_plane(move)
+        vector_pos = find_vector_pos(plane, x, y)
+        move_values.append(pout[vector_pos])
 
-    return legal_moves, move_probabilities
+    return legal_moves, move_values
 
 
 # return plane
 def find_plane(move):
-
     #Initialize plane to -1 to catch errors
     plane = -1
 
@@ -39,13 +40,13 @@ def find_plane(move):
             pass
         elif move[-1] == 'n':
             # kNight promotion
-            plane = 66 + h_dist
+            plane = 65 + h_dist
         elif move[-1] == 'b':
             # Bishop promotion
-            plane = 69 + h_dist
+            plane = 68 + h_dist
         elif move[-1] == 'r':
             # Rook promotion
-            plane = 72 + h_dist
+            plane = 71 + h_dist
         else:
             plane = -2 # Unique error code
 
@@ -54,30 +55,35 @@ def find_plane(move):
     if h_dist != 0 and v_dist != 0 and h_dist != v_dist:
         if v_dist == 2:
             if h_dist == 1:
-                plane = 57
-            else:
-                plane = 64
-        if h_dist == 2:
-            if v_dist == 1:
-                plane = 58
-            else:
-                plane = 59
-        if v_dist == -2:
-            if h_dist == 1:
-                plane = 60
-            else:
-                plane = 61
-        if h_dist == -2:
-            if v_dist == -1:
-                plane = 62
+                plane = 56
             else:
                 plane = 63
-    # Queen move
+        if h_dist == 2:
+            if v_dist == 1:
+                plane = 57
+            else:
+                plane = 58
+        if v_dist == -2:
+            if h_dist == 1:
+                plane = 59
+            else:
+                plane = 60
+        if h_dist == -2:
+            if v_dist == -1:
+                plane = 61
+            else:
+                plane = 62
+            #unique error code
+        else:
+            plane = -3
+    # Queen move- planes 0 through 55
 
     if h_dist == 0 and v_dist > 0:
         pass
     return plane
 
+def find_vector_pos(plane, x, y):
+    return plane*64 + 8*(8-y) + x
 
 
 # We have a stack 8*8*73 where each 8*8 plane represents a move(eg knight 2 left 1 up). Flattened to 4672*1. 

@@ -10,7 +10,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 # Hyper parameters
 num_epochs = 80
-batch_size = 100
+batch_size = 2048
 learning_rate = 0.001
 
 # Residual layer sub-model
@@ -88,9 +88,8 @@ class AmnomZero(nn.Module):
         pout = self.bn_p2(pout)
         pout = self.relu_p2(pout)
         pout = self.flatten_p2(pout)
-        #Policy gets a lil craaazy. Call movemask to mask the illegal moves
-        pout = move_mask(pout)
-        pout = F.softmax(pout)
+        legal_moves, move_values = move_mask(pout)
+        pout = F.softmax(move_values)
 
         vout = self.conv_v(out)
         vout = self.bn_v(vout)
@@ -101,9 +100,14 @@ class AmnomZero(nn.Module):
         vout = self.layer2_v(vout)
         vout = self.tanh_v(vout)
 
-        return pout, vout
+        return legal_moves, pout, vout
 
 
-#Make our own loss function? also maybe not in here. Maybe this is just the nurlnat
-#training loop is hard but maybe not in here
+#Create model on GPU and pass to train
+model = AmnomZero(ResidualLayer, 10, filters = 128).to(device)
+
+#loss function(s)
+
+optimize = torch.optim.AdamW(model.parameters(), lr = learning_rate)
+
 
