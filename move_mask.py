@@ -21,14 +21,34 @@ def move_mask(pout):
 
 # return plane
 def find_plane(move):
+
     #Initialize plane to -1 to catch errors
     plane = -1
-    if(len(move) > 4):
-        # promotion
-        pass
 
     h_dist = ranks[move[0]] - ranks[move[2]]
     v_dist = int(move[1]) - int(move[3])
+
+    # Promotion Moves: underpromotions encompass planes 65-73
+    # Order: Knight promotions, Bishop promotions, Rook promotions
+    # 3 planes for each (left diagonal capture, forward move, right diagonal capture)
+
+    if len(move) > 4:
+        if move[-1] == 'q':
+            # Queen promotions are included in queen move planes
+            # Add once queen plane order is decided
+            pass
+        elif move[-1] == 'n':
+            # kNight promotion
+            plane = 66 + h_dist
+        elif move[-1] == 'b':
+            # Bishop promotion
+            plane = 69 + h_dist
+        elif move[-1] == 'r':
+            # Rook promotion
+            plane = 72 + h_dist
+        else:
+            plane = -2 # Unique error code
+
 
 #Knight moves. First Knight plane is 57, I assigned them clockwise
     if h_dist != 0 and v_dist != 0 and h_dist != v_dist:
