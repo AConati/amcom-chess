@@ -26,6 +26,8 @@ def find_plane(move):
     #Initialize plane to -1 to catch errors
     plane = -1
 
+    # such a minor thing to irk me but the way we have it set up,
+    # "positive" distances actually indicate moving backwards/left
     h_dist = ranks[move[0]] - ranks[move[2]]
     v_dist = int(move[1]) - int(move[3])
 
@@ -76,10 +78,33 @@ def find_plane(move):
             #unique error code
         else:
             plane = -3
+    
     # Queen move- planes 0 through 55
+    else:
+        # mentally, I'm going y axis - from bottom to top (ie backwards 7 to forwards 7)
+        # although I understand that our distance definitions are reversed
+        if h_dist == 0:
+            if v_dist < 0:
+                plane = v_dist + 7 # map "down" moves to 0 - 6
+            else:
+                plane = v_dist + 6 # map "up" from 7-13
+        elif v_dist == 0:  # horizontal moves from left to right, mapped 14-27
+            if h_dist < 0:
+                plane = h_dist + 21 # map "left" from 14-20
+            else:
+                plane = h_dist + 20 # map "right" from 21-27
+        elif v_dist * h_dist > 0:   # indicates same sign i.e. either down&left or up&right
+            # map these from 28-41
+            if v_dist < 0:      # arbitrary, could be h_dist < 0, same thing
+                plane = v_dist + 35   # map down left from 28-34
+            else:
+                plane = v_dist + 34   # map up right from 35-41
+        else:           # up left to bottom right moves mapped 42-55
+            if h_dist < 0:
+                plane = h_dist + 49   # map up left from 42-48
+            else:
+                plane = h_dist + 48   # map down right from 43-49
 
-    if h_dist == 0 and v_dist > 0:
-        pass
     return plane
 
 def find_vector_pos(plane, x, y):
