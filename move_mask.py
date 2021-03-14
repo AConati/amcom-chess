@@ -26,10 +26,8 @@ def find_plane(move):
     #Initialize plane to -1 to catch errors
     plane = -1
 
-    # such a minor thing to irk me but the way we have it set up,
-    # "positive" distances actually indicate moving backwards/left
-    h_dist = ranks[move[0]] - ranks[move[2]]
-    v_dist = int(move[1]) - int(move[3])
+    h_dist = ranks[move[2]] - ranks[move[0]]
+    v_dist = int(move[3]) - int(move[1])
 
     # Promotion Moves: underpromotions encompass planes 65-73
     # Order: Knight promotions, Bishop promotions, Rook promotions
@@ -103,7 +101,7 @@ def find_plane(move):
             if h_dist < 0:
                 plane = h_dist + 49   # map up left from 42-48
             else:
-                plane = h_dist + 48   # map down right from 43-49
+                plane = h_dist + 48   # map down right from 49-55
 
     return plane
 

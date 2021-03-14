@@ -12,6 +12,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 num_epochs = 80
 batch_size = 2048
 learning_rate = 0.001
+c = .0001
 
 # Residual layer sub-model
 class ResidualLayer(nn.Module):
@@ -102,12 +103,26 @@ class AmnomZero(nn.Module):
 
         return legal_moves, pout, vout
 
+class CustomLoss(nn.Module):
+    def __init__(self):
+        super(CustomLoss, self).__init__()
+
+    def forward(self, endVal, neuralVal, mcProb, nnProb):
+        # endval = z, neuralval = v, mcProb = pi, nnprob = p
+        ceLossFn = nn.CrossEntropyLoss()
+        ceLoss = ceLoss(mcProb, nnProb)
+        mseLossFn = nn.MSELoss()
+        mseLoss = mseLossFn(endVal, neuralVal)
+        return mseLoss + ceLoss  
+
+
+
 
 #Create model on GPU and pass to train
 model = AmnomZero(ResidualLayer, 10, filters = 128).to(device)
 
 #loss function(s)
 
-optimize = torch.optim.AdamW(model.parameters(), lr = learning_rate)
+optimize = torch.optim.Adam(model.parameters(), lr = learning_rate, weight_decay = c, momentum=0.9)
 
 

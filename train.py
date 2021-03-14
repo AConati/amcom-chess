@@ -19,7 +19,7 @@
 
 #TODO list order means nothing:
 #-Make training loop
-#-Make loss function(its the sum of both the mean squared 
+#XX Done Make loss function(its the sum of both the mean squared 
 # loss for game states and cross entropy loss for move probs)
 #-Make function to initialize and update training set(needs to open model in eval mode)
 #-Make function to evaluate latest training loop
