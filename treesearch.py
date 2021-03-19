@@ -18,6 +18,14 @@ class Node(object):
         self.mean_val = data[2]
         self.prior_p = data[3]
 
+
+class GameState(object):
+    def __init__(self, nnProb, mcProb, neuralVal, endVal):
+        self.nnProb = nnProb
+        self.mcProb = mcProb
+        self.endVal = endVal
+        self.neuralVal = neuralVal
+
 # Outputs a fake probability dist p for legal moves and a fake value v for the state
 def fakeNN(board):
     num_moves = board.legal_moves.count()
@@ -98,10 +106,14 @@ def betterFakeNN(board):
 def MCTS(n, verbose):
     children = n.children
     if(children == []):
-        if(n.board.is_checkmate() or n.board.is_stalemate()):
+        if n.board.is_game_over():
             #We need this to be numerical TODO
-            print(n.board.result())
-            return n.board.result()
+            result = n.board.result()
+            if result[2] == '0':
+                return 1
+            if result[2] == '1':
+                return -1
+            return 0
         else:
             prior_p, state_val = fakeNN(n.board)
             moveList = [move for move in n.board.legal_moves]
@@ -140,6 +152,13 @@ Inputs
 Returns
 """
 def pickMove(node, maxIter= 1600):
+    if node.board.is_game_over():
+        result = node.board.result()
+        if result[2] == '0':
+            return 1, 1, 1, 0
+        if result[2] == '1':
+            return -1, -1, -1, 0
+        return 0, 0, 0, 0
     #Do we just wanna reset each iter?
     #node = Node(board, [0,0,0,0])
     prior_p, state_val = fakeNN(node.board)
@@ -151,7 +170,7 @@ def pickMove(node, maxIter= 1600):
     #this works and returns the max index dk why tho ask ari
     index_max = max(range(len(probs)), key=probs.__getitem__)
     bestNode = node.children[index_max]
-    return prior_p, state_val, bestNode
+    return prior_p, state_val, probs, bestNode
 
 """
 Function: Plays a move using the monteCarlo tresearch
@@ -159,11 +178,18 @@ Inputs
 Returns
 """
 def playGame(maxMoves= 1600, maxIter = 1600):
+    game_list = []
     board = chess.Board()
     node = Node(board, [0,0,0,0])
     for x in range(maxMoves):
-        prior_p, state_val, node = pickMove(node, maxIter)
+        prior_p, state_val, probs, node = pickMove(node, maxIter)
         print(node.board)
+        if node == 0:
+            for x in reversed(range(len(game_list))):
+                game_list[x].endVal = state_val
+                state_val *= -1
+            break
+        game_list.append(GameState(prior_p, probs, state_val, 0))
     return node
 
 print(playGame(100,500).board)
