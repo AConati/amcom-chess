@@ -125,4 +125,6 @@ model = AmnomZero(ResidualLayer, 10, filters = 128).to(device)
 
 optimize = torch.optim.Adam(model.parameters(), lr = learning_rate, weight_decay = c, momentum=0.9)
 
-
+criterion = CustomLoss()
+print("LOSS")
+print(criterion.forward(1, 0, 1, 1))
