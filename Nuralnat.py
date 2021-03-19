@@ -110,7 +110,7 @@ class CustomLoss(nn.Module):
     def forward(self, endVal, neuralVal, mcProb, nnProb):
         # endval = z, neuralval = v, mcProb = pi, nnprob = p
         ceLossFn = nn.CrossEntropyLoss()
-        ceLoss = ceLoss(mcProb, nnProb)
+        ceLoss = ceLossFn(mcProb, nnProb)
         mseLossFn = nn.MSELoss()
         mseLoss = mseLossFn(endVal, neuralVal)
         return mseLoss + ceLoss  
@@ -122,7 +122,6 @@ class CustomLoss(nn.Module):
 model = AmnomZero(ResidualLayer, 10, filters = 128).to(device)
 
 #loss function(s)
-
 optimize = torch.optim.Adam(model.parameters(), lr = learning_rate, weight_decay = c, momentum=0.9)
 
 criterion = CustomLoss()
