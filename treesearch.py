@@ -99,13 +99,15 @@ def MCTS(n, verbose):
     children = n.children
     if(children == []):
         if(n.board.is_checkmate() or n.board.is_stalemate()):
-            #We need this to be numerical TODO
+            #We need this to be numerical TODO. Look at second index maybe
+            print(n.board)
             print(n.board.result())
             return n.board.result()
         else:
             prior_p, state_val = fakeNN(n.board)
             moveList = [move for move in n.board.legal_moves]
-            for x in range(0, len(moveList)):
+            #should this be -1
+            for x in range(0, len(moveList)-1):
                 moveToTake = str(moveList[x])
                 n.board.push_san(moveToTake)
                 node = Node(n.board.copy(), [0, 0, 0, prior_p[x]])
@@ -166,4 +168,4 @@ def playGame(maxMoves= 1600, maxIter = 1600):
         print(node.board)
     return node
 
-print(playGame(100,500).board)
+print(playGame(200,100).board)

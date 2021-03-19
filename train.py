@@ -23,3 +23,9 @@
 #-Make training loop
 #-Make function to initialize and update training set(needs to open model in eval mode)
 #-Make function to evaluate latest training loop with function that can be called to make a move with the model in eval mode
+
+
+# Training set
+# Function to initialize the training loop
+def make_trainSet(samples = 100000):
+    for x in range(0, samples):
