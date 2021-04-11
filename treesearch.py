@@ -174,23 +174,23 @@ def pickMove(node, maxIter= 1600):
     return prior_p, state_val, probs, bestNode
 
 """
-Function: Plays a move using the monteCarlo tresearch
+Function: 
 Inputs
 Returns
 """
 def playGame(maxMoves= 1600, maxIter = 1600):
-    game_list = []
+    game_states = []
     board = chess.Board()
     node = Node(board, [0,0,0,0])
     for x in range(maxMoves):
         prior_p, state_val, probs, node = pickMove(node, maxIter)
         print(node.board)
         if node == 0:
-            for x in reversed(range(len(game_list))):
-                game_list[x].endVal = state_val
+            for x in reversed(range(len(game_states))):
+                game_states[x].endVal = state_val
                 state_val *= -1
             break
-        game_list.append(GameState(prior_p, probs, state_val, 0))
-    return node
+        game_states.append(GameState(prior_p, probs, state_val, 0))
+    return game_states
 
 print(playGame(200,100).board)
