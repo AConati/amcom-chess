@@ -28,10 +28,9 @@ class GameState(object):
 # Outputs a fake probability dist p for legal moves and a fake value v for the state
 def fakeNN(board):
     num_moves = board.legal_moves.count()
-    randomlist = random.sample(range(0, 100), num_moves)
-
+    randomlist = random.sample(range(1, 100), num_moves)
     total = sum(randomlist)
-    if total !=0:
+    if num_moves != 0:
         randomlist = [number / total for number in randomlist]
         return randomlist, random.uniform(-1, 1)
     else:
