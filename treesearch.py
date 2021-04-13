@@ -26,15 +26,20 @@ class GameState(object):
         self.endVal = endVal
 
 # Outputs a fake probability dist p for legal moves and a fake value v for the state
-def fakeNN(board):
-    num_moves = board.legal_moves.count()
-    randomlist = random.sample(range(0, 100), num_moves)
-
+def fakeNN(moveList, debug = False):
+    num_moves = len(moveList)
+    randomlist = random.sample(range(1, 100), num_moves)
+    if debug:
+        print("num moves")
+        print(num_moves)
+        print("random list")
+        print(randomlist)
+        print(sum(randomlist))
     total = sum(randomlist)
     if total !=0:
         randomlist = [number / total for number in randomlist]
         return randomlist, random.uniform(-1, 1)
-    else:
+    if num_moves == 0:
         return [], -10
 
 
@@ -114,13 +119,23 @@ def MCTS(n, verbose):
                 return -1
             return 0
         else:
-            prior_p, state_val = fakeNN(n.board)
+            
             moveList = [move for move in n.board.legal_moves]
+            prior_p, state_val = fakeNN(moveList)
             #should this be -1
             for x in range(0, len(moveList)):
                 moveToTake = str(moveList[x])
+                temp = n.board.copy()
                 n.board.push_san(moveToTake)
-                node = Node(n.board.copy(), [0, 0, 0, prior_p[x]])
+                try:
+                    node = Node(n.board.copy(), [0, 0, 0, prior_p[x]])
+                except:
+                    print("PRIORP:  ")
+                    print(prior_p)
+                    print("MOVELIST:  ")
+                    print(moveList)
+                    prior_ps, state_vals = fakeNN(moveList, True)
+                    node = Node(n.board.copy(), [0, 0, 0, prior_p[x]])
                 n.children.append(node)
                 node.parent.append(n)
                 node.prior_p = prior_p[x]
@@ -185,16 +200,16 @@ def playGame(maxMoves= 1600, maxIter = 1600):
     node = Node(board, [0,0,0,0])
     for x in range(maxMoves):
         probs, node = pickMove(node, maxIter)
-        print(node.board, '\n')
         if node == 0:   # game is over
             for x in reversed(range(len(game_states))):
                 game_states[x].endVal = probs
-                state_val *= -1
+                probs *= -1
             break
+        print(node.board, '\n')
         game_states.append(GameState(node, probs, 0))
     return game_states
 
-
-game = playGame(500,10)
-print(game[-1].node.board)
-print(game[-1].endVal)
+for x in range(0, 100):
+    game = playGame(500,10)
+    print(game[-1].node.board)
+    print(game[-1].endVal)
