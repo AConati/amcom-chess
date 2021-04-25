@@ -67,6 +67,8 @@ class AmnomZero(nn.Module):
         self.relu2_v = nn.ReLU(inplace=True)
         self.layer2_v = nn.linear(32, 1)
         self.tanh_v = nn.Tanh()
+
+    
         
 
     def make_layer(self, residLayer, out_channels, layers, stride=1):
@@ -101,6 +103,7 @@ class AmnomZero(nn.Module):
         vout = self.layer2_v(vout)
         vout = self.tanh_v(vout)
 
+        #Do we care about legal moves as an output?
         return legal_moves, pout, vout
 
 class CustomLoss(nn.Module):
@@ -120,10 +123,7 @@ class CustomLoss(nn.Module):
 
 #Create model on GPU and pass to train
 model = AmnomZero(ResidualLayer, 10, filters = 128).to(device)
-
 #loss function(s)
 optimize = torch.optim.Adam(model.parameters(), lr = learning_rate, weight_decay = c, momentum=0.9)
-
 criterion = CustomLoss()
-print("LOSS")
-print(criterion.forward(1, 0, 1, 1))
+

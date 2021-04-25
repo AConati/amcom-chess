@@ -101,7 +101,7 @@ def betterFakeNN(board):
 
 
 
-def MCTS(n, verbose):
+def MCTS(n, verbose=False):
     children = n.children
     if(children == []):
         if n.board.is_game_over():
@@ -115,7 +115,7 @@ def MCTS(n, verbose):
         else:
             
             moveList = [move for move in n.board.legal_moves]
-            prior_p, state_val = fakeNN(moveList)
+            prior_p, state_val = fakeNN(n.board)
             #should this be -1
             for x in range(0, len(moveList)):
                 moveToTake = str(moveList[x])
@@ -124,10 +124,10 @@ def MCTS(n, verbose):
                 try:
                     node = Node(n.board.copy(), [0, 0, 0, prior_p[x]])
                 except:
-                    print("PRIORP:  ")
-                    print(prior_p)
-                    print("MOVELIST:  ")
-                    print(moveList)
+                    # print("PRIORP:  ")
+                    # print(prior_p)
+                    # print("MOVELIST:  ")
+                    # print(moveList)
                     prior_ps, state_vals = fakeNN(moveList, True)
                     node = Node(n.board.copy(), [0, 0, 0, prior_p[x]])
                 n.children.append(node)
@@ -199,11 +199,11 @@ def playGame(maxMoves= 1600, maxIter = 1600):
                 game_states[x].endVal = probs
                 probs *= -1
             break
-        print(node.board, '\n')
+        #print(node.board, '\n')
         game_states.append(GameState(node, probs, 0))
     return game_states
 
 
-game = playGame(500,10)
-print(game[-1].node.board)
-print(game[-1].endVal)
+# game = playGame(500,10)
+# print(game[-1].node.board)
+# print(game[-1].endVal)
