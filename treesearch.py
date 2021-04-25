@@ -26,17 +26,11 @@ class GameState(object):
         self.endVal = endVal
 
 # Outputs a fake probability dist p for legal moves and a fake value v for the state
-def fakeNN(moveList, debug = False):
-    num_moves = len(moveList)
+def fakeNN(board):
+    num_moves = board.legal_moves.count()
     randomlist = random.sample(range(1, 100), num_moves)
-    if debug:
-        print("num moves")
-        print(num_moves)
-        print("random list")
-        print(randomlist)
-        print(sum(randomlist))
     total = sum(randomlist)
-    if total !=0:
+    if num_moves != 0:
         randomlist = [number / total for number in randomlist]
         return randomlist, random.uniform(-1, 1)
     if num_moves == 0:
@@ -209,7 +203,7 @@ def playGame(maxMoves= 1600, maxIter = 1600):
         game_states.append(GameState(node, probs, 0))
     return game_states
 
-for x in range(0, 100):
-    game = playGame(500,10)
-    print(game[-1].node.board)
-    print(game[-1].endVal)
+
+game = playGame(500,10)
+print(game[-1].node.board)
+print(game[-1].endVal)
