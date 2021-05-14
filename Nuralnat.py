@@ -5,6 +5,7 @@ import torchvision
 import torchvision.transforms as transforms
 import chess
 from move_mask import move_mask
+from torchsummary import summary
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -40,7 +41,7 @@ class ResidualLayer(nn.Module):
 class AmnomZero(nn.Module):
     def __init__(self, residLayer, layers=40, filters=256, num_moves=73):
         super(AmnomZero, self).__init__()
-        self.in_channels = 119  #https://arxiv.org/pdf/1712.01815.pdf page 13 hmm
+        self.in_channels = 19  #https://arxiv.org/pdf/1712.01815.pdf page 13 hmm
         self.conv = nn.Conv2d(self.in_channels, filters, kernel_size=3, padding=1)
         self.bn = nn.BatchNorm2d(filters)
         self.relu = nn.ReLU(inplace=True)
@@ -71,9 +72,9 @@ class AmnomZero(nn.Module):
     
         
 
-    def make_layer(self, residLayer, out_channels, layers, stride=1):
+    def make_layer(self, residLayer, out_channels, numlayers, stride=1):
         layers = []
-        for x in range(0, layers):
+        for x in range(0, numlayers):
             layers.append(residLayer(self.in_channels, out_channels))
 
         return nn.Sequential(*layers)
@@ -124,6 +125,7 @@ class CustomLoss(nn.Module):
 #Create model on GPU and pass to train
 model = AmnomZero(ResidualLayer, 10, filters = 128).to(device)
 #loss function(s)
-optimize = torch.optim.Adam(model.parameters(), lr = learning_rate, weight_decay = c, momentum=0.9)
+torch.optim.Adam(model.parameters(), learning_rate=0.001, betas=(0.9, 0.999), eps=1e-08, weight_decay=c, amsgrad=False)
 criterion = CustomLoss()
 
+summary(model, (19, 8, 8))

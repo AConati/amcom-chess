@@ -3,15 +3,17 @@ import treesearch
 import Nuralnat
 
 #Create a training set with treesearch to start:
-#Play 100,000 games
+#Play 100,000 games - done
 
 #1. Training loop: sample 512 positions from the last 100,000 games
-#retrain on positions
-#do this 1000 times
+#retrain on positions -mostly done
+#do this 1000 times - mostly done
 
 #2. Totally tactical test training tournament:
 #Play 400 games between new network and old version
-#If new wins 55% it becomes old
+#1. mechanism to save a neural net and load one
+#2. mechanism to play games against each other
+# If new wins 55% it becomes old
 
 #3. Update training set:
 # Play 10,000 games with old network against itself,
@@ -73,7 +75,8 @@ def train(game_list, num_epochs = 1000):
             loss.backward()
             #use optimizer to step based on gradients
             optimizer.step()
-
+#should have all the data and take one step based on sum of error
+#not step individually
 
 
 print("wooohooo")
