@@ -15,7 +15,6 @@ def move_mask(pout, board):
         y = int(move[1])
         plane = find_plane(move)
         vector_pos = find_vector_pos(plane, x, y)
-        print(pout.shape)
         move_values.append(pout[vector_pos])
 
     return legal_moves, move_values
@@ -28,7 +27,7 @@ def find_plane(move):
 
     h_dist = ranks[move[2]] - ranks[move[0]]
     v_dist = int(move[3]) - int(move[1])
-    print(str(h_dist) + ' = hdist, vdist=' + str(v_dist))
+    #print(str(h_dist) + ' = hdist, vdist=' + str(v_dist))
 
     # Promotion Moves: underpromotions encompass planes 65-73
     # Order: Knight promotions, Bishop promotions, Rook promotions
@@ -107,7 +106,6 @@ def find_plane(move):
     return plane
 
 def find_vector_pos(plane, x, y):
-    print(plane, x, y)
     return plane*64 + 8*(8-y) + x
 
 

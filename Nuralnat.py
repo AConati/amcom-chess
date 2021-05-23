@@ -7,7 +7,7 @@ import chess
 from move_mask import move_mask
 from torchsummary import summary
 
-#device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 # Hyper parameters
 num_epochs = 80
@@ -50,18 +50,20 @@ class AmnomZero(nn.Module):
 
         # policy head
         # possibly bad, maybe more lairs?
-        self.conv_p1 = nn.Conv2d(filters, filters, kernel_size=3)
+        self.conv_p1 = nn.Conv2d(filters, filters, kernel_size=3, padding = 1)
         self.bn_p1 = nn.BatchNorm2d(filters)
         self.relu_p1 = nn.ReLU(inplace=True)
 
         self.conv_p2 = nn.Conv2d(filters, 73, kernel_size=1)
         self.bn_p2 = nn.BatchNorm2d(73)
+
+
         #Arbitrarily define what layers mean
         self.relu_p2 = nn.ReLU(inplace=True)
         self.flatten_p2 = nn.Flatten()
 
         # value head
-        self.conv_v = nn.Conv2d(self.in_channels, 1, kernel_size=1)
+        self.conv_v = nn.Conv2d(filters,1, kernel_size=1)
         self.bn_v = nn.BatchNorm2d(1)
         self.relu_v = nn.ReLU(inplace=True)
         self.flatten_v = nn.Flatten()
@@ -81,9 +83,6 @@ class AmnomZero(nn.Module):
         return nn.Sequential(*layers)
 
     def forward(self, data):
-        # data shape is [2,19,8,8] which is causing problems
-        # there's a twooooo?
-        # then the 8x8 turns into 6x6
         out = self.conv(data)
         out = self.bn(out)
         out = self.relu(out)
@@ -96,9 +95,11 @@ class AmnomZero(nn.Module):
         pout = self.bn_p2(pout)
         pout = self.relu_p2(pout)
         pout = self.flatten_p2(pout)
+        pout = torch.squeeze(pout)
         legal_moves, move_values = move_mask(pout, self.board)
-        pout = F.softmax(move_values)
-
+        move_values = torch.FloatTensor(move_values)
+        pout = F.softmax(move_values, dim = 0)
+        
         vout = self.conv_v(out)
         vout = self.bn_v(vout)
         vout = self.relu_v(vout)
@@ -111,26 +112,36 @@ class AmnomZero(nn.Module):
         #Do we care about legal moves as an output?
         return legal_moves, pout, vout
 
+
 class CustomLoss(nn.Module):
     def __init__(self):
         super(CustomLoss, self).__init__()
+        self.mseLossFn = nn.MSELoss().to(device)
+        
 
-    def forward(self, endVal, neuralVal, mcProb, nnProb):
+    def forward(self, model, endVal, neuralVal, mcProb, nnProb):
         # endval = z, neuralval = v, mcProb = pi, nnprob = p
-        ceLossFn = nn.CrossEntropyLoss()
-        ceLoss = ceLossFn(mcProb, nnProb)
-        mseLossFn = nn.MSELoss()
-        mseLoss = mseLossFn(endVal, neuralVal)
-        return mseLoss + ceLoss  
+        mseLoss = self.mseLossFn(endVal, neuralVal)
+        test = torch.mul(nnProb, -torch.log(mcProb))
+        ceLoss = torch.sum(torch.mul(nnProb, -torch.log(mcProb)))
+
+        
+        return mseLoss + ceLoss 
 
 
 
 
 #Create model on GPU and pass to train
 test_board = chess.Board()
-model = AmnomZero(ResidualLayer, test_board, 10, filters = 128)#.to(device)
+model = AmnomZero(ResidualLayer, test_board, 10, filters = 128).to(device)
 #loss function(s)
 torch.optim.Adam(model.parameters(), lr=0.001, betas=(0.9, 0.999), eps=1e-08, weight_decay=c, amsgrad=False)
 criterion = CustomLoss()
+a = torch.rand([1,19,8,8]).cuda()
+print(model)
+a,b,c = model(a)
+a = torch.rand([1,19,8,8]).cuda()
+d,e,f = model(a)
 
-summary(model, (19, 8, 8))
+loss = criterion(model,c,f,b,e)
+print("TEST LOSS= " +str(loss.item()))
