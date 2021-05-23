@@ -1,4 +1,7 @@
+import chess
 import random
+import numpy as np
+
 import treesearch
 import Nuralnat
 
@@ -39,9 +42,30 @@ def get_batch(game_list):
     return [random.sample(random_games[x], 1) for x in range(0, len(random_games))]
     
 #Neural net expects 119*8*8 stack representation of a board. Make it
-def convert_for_nn(board):
-    pass
+def convert_for_nn(board, history=1):
+    bitboards = []
+    black, white = board.occupied_co
+    bitboards.extend((white & board.pawns, white & board.knights, white & board.bishops, white & board.rooks, white & board.queens, white & board.kings, black & board.pawns, black & board.knights, black & board.bishops, black & board.rooks, black & board.queens, black & board.kings))
+    # Should add repetitions here, but it appears like python chess doesn't keep track of
+    # repetitions, so the operation is slow. Ie. maybe not worth to check for repetitions?
+    # Still unsure how much difference it makes
 
+    plane_list = bitboards_to_array(bitboards)
+    plane_list = np.append(plane_list, np.full((8,8), board.turn))
+    ## Total move count? No progress count? How to represent?
+
+    plane_list = np.append(plane_list, np.full((8,8), board.castling_rights & chess.BB_H1))
+    plane_list = np.append(plane_list, np.full((8,8), board.castling_rights & chess.BB_A1))
+    plane_list = np.append(plane_list, np.full((8,8), board.castling_rights & chess.BB_H8))
+    plane_list = np.append(plane_list, np.full((8,8), board.castling_rights & chess.BB_A8))
+
+def bitboards_to_array(bb):
+    bb = np.asarray(bb, dtype=np.uint64)[:, np.newaxis]
+    s = 8 * np.arange(7, -1, -1, dtype=np.uint64)
+    b = (bb >> s).astype(np.uint8)
+    b = np.unpackbits(b, bitorder="little")
+    return b.reshape(-1, 8, 8)
+    
 # Training set
 # Function to initialize the training loop
 def make_trainSet(samples = 100000):
