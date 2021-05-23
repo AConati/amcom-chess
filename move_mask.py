@@ -27,6 +27,7 @@ def find_plane(move):
 
     h_dist = ranks[move[2]] - ranks[move[0]]
     v_dist = int(move[3]) - int(move[1])
+    #print(str(h_dist) + ' = hdist, vdist=' + str(v_dist))
 
     # Promotion Moves: underpromotions encompass planes 65-73
     # Order: Knight promotions, Bishop promotions, Rook promotions
@@ -57,17 +58,17 @@ def find_plane(move):
                 plane = 56
             else:
                 plane = 63
-        if h_dist == 2:
+        elif h_dist == 2:
             if v_dist == 1:
                 plane = 57
             else:
                 plane = 58
-        if v_dist == -2:
+        elif v_dist == -2:
             if h_dist == 1:
                 plane = 59
             else:
                 plane = 60
-        if h_dist == -2:
+        elif h_dist == -2:
             if v_dist == -1:
                 plane = 61
             else:

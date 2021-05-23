@@ -39,21 +39,22 @@ class ResidualLayer(nn.Module):
 # Alpha Zero
 # pass in
 class AmnomZero(nn.Module):
-    def __init__(self, residLayer, layers=40, filters=256, num_moves=73):
+    def __init__(self, residLayer, board, layers=40, filters=256, num_moves=73):
         super(AmnomZero, self).__init__()
+        self.board = board
         self.in_channels = 19  #https://arxiv.org/pdf/1712.01815.pdf page 13 hmm
         self.conv = nn.Conv2d(self.in_channels, filters, kernel_size=3, padding=1)
         self.bn = nn.BatchNorm2d(filters)
         self.relu = nn.ReLU(inplace=True)
-        self.layer = self.make_layer(residLayer, filters, layers)
+        self.layer = self.make_layer(residLayer, filters, filters, layers)   # in channels has to match out channels of self.conv call which is filters here
 
         # policy head
         # possibly bad, maybe more lairs?
-        self.conv_p1 = nn.Conv2d(self.in_channels, filters, kernel_size=1, padding=1)
+        self.conv_p1 = nn.Conv2d(filters, filters, kernel_size=3, padding = 1)
         self.bn_p1 = nn.BatchNorm2d(filters)
         self.relu_p1 = nn.ReLU(inplace=True)
 
-        self.conv_p2 = nn.Conv2d(self.in_channels, 73, kernel_size=1)
+        self.conv_p2 = nn.Conv2d(filters, 73, kernel_size=1)
         self.bn_p2 = nn.BatchNorm2d(73)
 
 
@@ -62,7 +63,7 @@ class AmnomZero(nn.Module):
         self.flatten_p2 = nn.Flatten()
 
         # value head
-        self.conv_v = nn.Conv2d(self.in_channels, 1, kernel_size=1)
+        self.conv_v = nn.Conv2d(filters,1, kernel_size=1)
         self.bn_v = nn.BatchNorm2d(1)
         self.relu_v = nn.ReLU(inplace=True)
         self.flatten_v = nn.Flatten()
@@ -74,18 +75,15 @@ class AmnomZero(nn.Module):
     
         
 
-    def make_layer(self, residLayer, out_channels, numlayers, stride=1):
+    def make_layer(self, residLayer, in_channels, out_channels, numlayers, stride=1):
         layers = []
         for x in range(0, numlayers):
-            layers.append(residLayer(self.in_channels, out_channels))
+            layers.append(residLayer(in_channels, out_channels))
 
         return nn.Sequential(*layers)
 
     def forward(self, data):
-        print(data.shape)
-        print(data[0].shape)
         out = self.conv(data)
-        print(out.shape)
         out = self.bn(out)
         out = self.relu(out)
         out = self.layer(out)
@@ -96,10 +94,12 @@ class AmnomZero(nn.Module):
         pout = self.conv_p2(pout)
         pout = self.bn_p2(pout)
         pout = self.relu_p2(pout)
-        pout = self.flatten_p2(pout)#https://adspassets.blob.core.windows.net/website/content/alpha_go_zero_cheat_sheet.png
-        legal_moves, move_values = move_mask(pout)
-        pout = F.softmax(move_values)
-
+        pout = self.flatten_p2(pout)
+        pout = torch.squeeze(pout)
+        legal_moves, move_values = move_mask(pout, self.board)
+        move_values = torch.FloatTensor(move_values)
+        pout = F.softmax(move_values, dim = 0)
+        
         vout = self.conv_v(out)
         vout = self.bn_v(vout)
         vout = self.relu_v(vout)
@@ -112,25 +112,36 @@ class AmnomZero(nn.Module):
         #Do we care about legal moves as an output?
         return legal_moves, pout, vout
 
+
 class CustomLoss(nn.Module):
     def __init__(self):
         super(CustomLoss, self).__init__()
+        self.mseLossFn = nn.MSELoss().to(device)
+        
 
-    def forward(self, endVal, neuralVal, mcProb, nnProb):
+    def forward(self, model, endVal, neuralVal, mcProb, nnProb):
         # endval = z, neuralval = v, mcProb = pi, nnprob = p
-        ceLossFn = nn.CrossEntropyLoss()
-        ceLoss = ceLossFn(mcProb, nnProb)
-        mseLossFn = nn.MSELoss()
-        mseLoss = mseLossFn(endVal, neuralVal)
-        return mseLoss + ceLoss  
+        mseLoss = self.mseLossFn(endVal, neuralVal)
+        test = torch.mul(nnProb, -torch.log(mcProb))
+        ceLoss = torch.sum(torch.mul(nnProb, -torch.log(mcProb)))
+
+        
+        return mseLoss + ceLoss 
 
 
 
 
 #Create model on GPU and pass to train
-model = AmnomZero(ResidualLayer, 10, filters = 128).to(device)
+test_board = chess.Board()
+model = AmnomZero(ResidualLayer, test_board, 10, filters = 128).to(device)
 #loss function(s)
 torch.optim.Adam(model.parameters(), lr=0.001, betas=(0.9, 0.999), eps=1e-08, weight_decay=c, amsgrad=False)
 criterion = CustomLoss()
-a = torch.Size([19,8,8])
-summary(model, a, batch_size=None)
+a = torch.rand([1,19,8,8]).cuda()
+print(model)
+a,b,c = model(a)
+a = torch.rand([1,19,8,8]).cuda()
+d,e,f = model(a)
+
+loss = criterion(model,c,f,b,e)
+print("TEST LOSS= " +str(loss.item()))
