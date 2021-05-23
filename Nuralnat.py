@@ -7,7 +7,7 @@ import chess
 from move_mask import move_mask
 from torchsummary import summary
 
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+#device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 # Hyper parameters
 num_epochs = 80
@@ -39,21 +39,22 @@ class ResidualLayer(nn.Module):
 # Alpha Zero
 # pass in
 class AmnomZero(nn.Module):
-    def __init__(self, residLayer, layers=40, filters=256, num_moves=73):
+    def __init__(self, residLayer, board, layers=40, filters=256, num_moves=73):
         super(AmnomZero, self).__init__()
+        self.board = board
         self.in_channels = 19  #https://arxiv.org/pdf/1712.01815.pdf page 13 hmm
         self.conv = nn.Conv2d(self.in_channels, filters, kernel_size=3, padding=1)
         self.bn = nn.BatchNorm2d(filters)
         self.relu = nn.ReLU(inplace=True)
-        self.layer = self.make_layer(residLayer, filters, layers)
+        self.layer = self.make_layer(residLayer, filters, filters, layers)   # in channels has to match out channels of self.conv call which is filters here
 
         # policy head
         # possibly bad, maybe more lairs?
-        self.conv_p1 = nn.Conv2d(self.in_channels, filters, kernel_size=1)
+        self.conv_p1 = nn.Conv2d(filters, filters, kernel_size=3)
         self.bn_p1 = nn.BatchNorm2d(filters)
         self.relu_p1 = nn.ReLU(inplace=True)
 
-        self.conv_p2 = nn.Conv2d(self.in_channels, 73, kernel_size=1)
+        self.conv_p2 = nn.Conv2d(filters, 73, kernel_size=1)
         self.bn_p2 = nn.BatchNorm2d(73)
         #Arbitrarily define what layers mean
         self.relu_p2 = nn.ReLU(inplace=True)
@@ -64,22 +65,25 @@ class AmnomZero(nn.Module):
         self.bn_v = nn.BatchNorm2d(1)
         self.relu_v = nn.ReLU(inplace=True)
         self.flatten_v = nn.Flatten()
-        self.layer_v = nn.linear(64, 32)
+        self.layer_v = nn.Linear(64, 32)
         self.relu2_v = nn.ReLU(inplace=True)
-        self.layer2_v = nn.linear(32, 1)
+        self.layer2_v = nn.Linear(32, 1)
         self.tanh_v = nn.Tanh()
 
     
         
 
-    def make_layer(self, residLayer, out_channels, numlayers, stride=1):
+    def make_layer(self, residLayer, in_channels, out_channels, numlayers, stride=1):
         layers = []
         for x in range(0, numlayers):
-            layers.append(residLayer(self.in_channels, out_channels))
+            layers.append(residLayer(in_channels, out_channels))
 
         return nn.Sequential(*layers)
 
     def forward(self, data):
+        # data shape is [2,19,8,8] which is causing problems
+        # there's a twooooo?
+        # then the 8x8 turns into 6x6
         out = self.conv(data)
         out = self.bn(out)
         out = self.relu(out)
@@ -92,7 +96,7 @@ class AmnomZero(nn.Module):
         pout = self.bn_p2(pout)
         pout = self.relu_p2(pout)
         pout = self.flatten_p2(pout)
-        legal_moves, move_values = move_mask(pout)
+        legal_moves, move_values = move_mask(pout, self.board)
         pout = F.softmax(move_values)
 
         vout = self.conv_v(out)
@@ -123,9 +127,10 @@ class CustomLoss(nn.Module):
 
 
 #Create model on GPU and pass to train
-model = AmnomZero(ResidualLayer, 10, filters = 128).to(device)
+test_board = chess.Board()
+model = AmnomZero(ResidualLayer, test_board, 10, filters = 128)#.to(device)
 #loss function(s)
-torch.optim.Adam(model.parameters(), learning_rate=0.001, betas=(0.9, 0.999), eps=1e-08, weight_decay=c, amsgrad=False)
+torch.optim.Adam(model.parameters(), lr=0.001, betas=(0.9, 0.999), eps=1e-08, weight_decay=c, amsgrad=False)
 criterion = CustomLoss()
 
 summary(model, (19, 8, 8))
