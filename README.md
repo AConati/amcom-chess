@@ -7,8 +7,11 @@ TOOOOODDDDDDOOOOOOs:
 1. Generate a stack from a board position - Ari
 We have a board like a chess.whatever board y'kno and we need a stack being the 8*8*73 stack where look at movemask for plane order. in train.py
 
+DONE
+
 1. fix bugs in nuralnat - Nut/marco
-- squashed a little but also having more bugs now, after conv_1 in policy head we're getting shape [2,128,6,6]
+
+DONE
 
 2-5 have comments in train.py with more details
 2. Fix the stepping in the train loop. Should only step once per batch and not for every sample in the batch
@@ -31,3 +34,17 @@ We have a board like a chess.whatever board y'kno and we need a stack being the 
 
 8. keep in mind whether we need a history? repititions? who knows paper linked in nuralnat
 
+
+## Upcoming Week
+
+### Ari
+
+* Push move from neural net output and create new board representation
+* Fix train loop stepping
+* Totally tactical training tournament
+
+### Natalia
+
+* Model saving / loading
+* Organization
+* Update training set
