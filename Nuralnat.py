@@ -49,12 +49,14 @@ class AmnomZero(nn.Module):
 
         # policy head
         # possibly bad, maybe more lairs?
-        self.conv_p1 = nn.Conv2d(self.in_channels, filters, kernel_size=1)
+        self.conv_p1 = nn.Conv2d(self.in_channels, filters, kernel_size=1, padding=1)
         self.bn_p1 = nn.BatchNorm2d(filters)
         self.relu_p1 = nn.ReLU(inplace=True)
 
         self.conv_p2 = nn.Conv2d(self.in_channels, 73, kernel_size=1)
         self.bn_p2 = nn.BatchNorm2d(73)
+
+
         #Arbitrarily define what layers mean
         self.relu_p2 = nn.ReLU(inplace=True)
         self.flatten_p2 = nn.Flatten()
@@ -64,9 +66,9 @@ class AmnomZero(nn.Module):
         self.bn_v = nn.BatchNorm2d(1)
         self.relu_v = nn.ReLU(inplace=True)
         self.flatten_v = nn.Flatten()
-        self.layer_v = nn.linear(64, 32)
+        self.layer_v = nn.Linear(64, 32)
         self.relu2_v = nn.ReLU(inplace=True)
-        self.layer2_v = nn.linear(32, 1)
+        self.layer2_v = nn.Linear(32, 1)
         self.tanh_v = nn.Tanh()
 
     
@@ -80,7 +82,10 @@ class AmnomZero(nn.Module):
         return nn.Sequential(*layers)
 
     def forward(self, data):
+        print(data.shape)
+        print(data[0].shape)
         out = self.conv(data)
+        print(out.shape)
         out = self.bn(out)
         out = self.relu(out)
         out = self.layer(out)
@@ -91,7 +96,7 @@ class AmnomZero(nn.Module):
         pout = self.conv_p2(pout)
         pout = self.bn_p2(pout)
         pout = self.relu_p2(pout)
-        pout = self.flatten_p2(pout)
+        pout = self.flatten_p2(pout)#https://adspassets.blob.core.windows.net/website/content/alpha_go_zero_cheat_sheet.png
         legal_moves, move_values = move_mask(pout)
         pout = F.softmax(move_values)
 
@@ -125,7 +130,7 @@ class CustomLoss(nn.Module):
 #Create model on GPU and pass to train
 model = AmnomZero(ResidualLayer, 10, filters = 128).to(device)
 #loss function(s)
-torch.optim.Adam(model.parameters(), learning_rate=0.001, betas=(0.9, 0.999), eps=1e-08, weight_decay=c, amsgrad=False)
+torch.optim.Adam(model.parameters(), lr=0.001, betas=(0.9, 0.999), eps=1e-08, weight_decay=c, amsgrad=False)
 criterion = CustomLoss()
-
-summary(model, (19, 8, 8))
+a = torch.Size([19,8,8])
+summary(model, a, batch_size=None)
