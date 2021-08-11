@@ -14,9 +14,9 @@ DONE
 DONE
 
 2-5 have comments in train.py with more details
-2. Fix the stepping in the train loop. Should only step once per batch and not for every sample in the batch
+2. Fix the stepping in the train loop. Should only step once per batch and not for every sample in the batch--
 
-3. add model saving and loading
+3. add model saving and loading--
 
 4. add functionality to play against itself and see if its less dumb
 
@@ -41,7 +41,7 @@ DONE
 
 * Push move from neural net output and create new board representation
 * Fix train loop stepping
-* Totally tactical training tournament
+* Totally tactical training Frogs
 
 ### Natalia
 

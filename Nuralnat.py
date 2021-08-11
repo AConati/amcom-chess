@@ -150,5 +150,5 @@ loss.backward()
 optimizer.step()
 #MODEL MAKES NUMBERS!
 print(a)
-print(b[0].item())
+print(b.numpy())
 print(c.item())
