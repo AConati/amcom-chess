@@ -45,6 +45,5 @@ DONE
 
 ### Natalia
 
-* Model saving / loading
 * Organization
 * Update training set

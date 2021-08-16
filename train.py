@@ -51,13 +51,18 @@ def convert_for_nn(board, history=1):
     # Still unsure how much difference it makes
 
     plane_list = bitboards_to_array(bitboards)
+    print(plane_list)
+    print(plane_list.shape)
     plane_list = np.append(plane_list, np.full((8,8), board.turn))
+    print(plane_list)
+    print(plane_list.shape)
     ## Total move count? No progress count? How to represent?
 
     plane_list = np.append(plane_list, np.full((8,8), board.castling_rights & chess.BB_H1))
     plane_list = np.append(plane_list, np.full((8,8), board.castling_rights & chess.BB_A1))
-    plane_list = np.append(plane_list, np.full((8,8), board.castling_rights & chess.BB_H8))
+    plane_list = np.append(plane_listprint(119*8), np.full((8,8), board.castling_rights & chess.BB_H8))
     plane_list = np.append(plane_list, np.full((8,8), board.castling_rights & chess.BB_A8))
+    return plane_list
 
 def bitboards_to_array(bb):
     bb = np.asarray(bb, dtype=np.uint64)[:, np.newaxis]
@@ -104,5 +109,7 @@ def train(game_list, num_epochs = 1000):
 
 
 print("wooohooo")
-g_list = make_trainSet()
-print(g_list)
+#g_list = make_trainSet()
+board = chess.Board()
+converted = convert_for_nn(board)
+print(converted.shape)
