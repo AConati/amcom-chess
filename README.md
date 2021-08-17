@@ -16,7 +16,7 @@ DONE
 2-5 have comments in train.py with more details
 2. Fix the stepping in the train loop. Should only step once per batch and not for every sample in the batch--
 
-3. add model saving and loading--
+3. add model saving and loading--Done
 
 4. add functionality to play against itself and see if its less dumb
 
@@ -39,7 +39,6 @@ DONE
 
 ### Ari
 
-* Push move from neural net output and create new board representation
 * Fix train loop stepping
 * Totally tactical training Frogs
 
@@ -47,3 +46,20 @@ DONE
 
 * Organization
 * Update training set
+
+
+###TODO/TODONE
+Fixed the board-stack
+Can take a board-make a stack-eval with NN
+Can play games with a fake NN
+
+Add plane for moveCount(game ends on 75)
+Make NN just take in a board and convert it within the call
+Make MTCS use nnclass NNs
+Save NNs in an NNclass structure
+Make NN train on whole batch
+Check if new NN is better(400 games)
+Update trainset
+
+
+

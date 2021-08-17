@@ -1,9 +1,9 @@
 import chess
 import random
 import numpy as np
-
+import torch
 import treesearch
-import Nuralnat
+from Nuralnat import AmnomZero, ResidualLayer, CustomLoss
 
 #Create a training set with treesearch to start:
 #Play 100,000 games - done
@@ -67,6 +67,7 @@ def convert_for_nn(board, history=1):
     plane_list = np.append(plane_list, np.full((8,8), board.castling_rights & chess.BB_A8))
     return plane_list
 
+
 def bitboards_to_array(bb):
     bb = np.asarray(bb, dtype=np.uint64)[:, np.newaxis]
     s = 8 * np.arange(7, -1, -1, dtype=np.uint64)
@@ -115,4 +116,14 @@ print("wooohooo")
 #g_list = make_trainSet()
 board = chess.Board()
 converted = convert_for_nn(board)
+print(converted)
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+model = AmnomZero(ResidualLayer, 10, filters = 128).to(device)
+#loss function(s)
+optimizer = torch.optim.Adam(model.parameters(), lr=0.001, betas=(0.9, 0.999), eps=1e-08, weight_decay=0.001, amsgrad=False)
+criterion = CustomLoss()
 print(converted.shape)
+a,b,c = model(converted.to(device), board)
+print(a)
+print(b)
+print(c)
