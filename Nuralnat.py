@@ -39,10 +39,9 @@ class ResidualLayer(nn.Module):
 # Alpha Zero
 # pass in
 class AmnomZero(nn.Module):
-    def __init__(self, residLayer, board, layers=40, filters=256, num_moves=73):
+    def __init__(self, residLayer,layers=40, filters=256, num_moves=73):
         super(AmnomZero, self).__init__()
-        self.board = board
-        self.in_channels = 19  #https://arxiv.org/pdf/1712.01815.pdf page 13 hmm
+        self.in_channels = 17  #https://arxiv.org/pdf/1712.01815.pdf page 13 hmm
         self.conv = nn.Conv2d(self.in_channels, filters, kernel_size=3, padding=1)
         self.bn = nn.BatchNorm2d(filters)
         self.relu = nn.ReLU(inplace=True)
@@ -82,7 +81,7 @@ class AmnomZero(nn.Module):
 
         return nn.Sequential(*layers)
 
-    def forward(self, data):
+    def forward(self, data, board):
         out = self.conv(data)
         out = self.bn(out)
         out = self.relu(out)
@@ -96,7 +95,7 @@ class AmnomZero(nn.Module):
         pout = self.relu_p2(pout)
         pout = self.flatten_p2(pout)
         pout = torch.squeeze(pout)
-        legal_moves, move_values = move_mask(pout, self.board)
+        legal_moves, move_values = move_mask(pout, board)
         move_values = torch.FloatTensor(move_values)
         pout = F.softmax(move_values, dim = 0)
         
@@ -133,15 +132,15 @@ class CustomLoss(nn.Module):
 
 #Create model on GPU and pass to train
 test_board = chess.Board()
-model = AmnomZero(ResidualLayer, test_board, 10, filters = 128).to(device)
+model = AmnomZero(ResidualLayer, 10, filters = 128).to(device)
 #loss function(s)
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001, betas=(0.9, 0.999), eps=1e-08, weight_decay=c, amsgrad=False)
 criterion = CustomLoss()
-a = torch.rand([1,19,8,8]).to(device)
+a = torch.rand([1,17,8,8]).to(device)
 print(model)
-a,b,c = model(a)
-z = torch.rand([1,19,8,8]).to(device)
-d,e,f = model(z)
+a,b,c = model(a, test_board)
+z = torch.rand([1,17,8,8]).to(device)
+d,e,f = model(z, test_board)
 
 loss = criterion(model,c,f,b,e)
 print("TEST LOSS= " +str(loss.item()))
@@ -152,3 +151,4 @@ optimizer.step()
 print(a)
 print(b.numpy())
 print(c.item())
+

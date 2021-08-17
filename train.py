@@ -1,9 +1,9 @@
 import chess
 import random
 import numpy as np
-
+import torch
 import treesearch
-import Nuralnat
+from Nuralnat import AmnomZero, ResidualLayer, CustomLoss
 
 #Create a training set with treesearch to start:
 #Play 100,000 games - done
@@ -51,18 +51,15 @@ def convert_for_nn(board, history=1):
     # Still unsure how much difference it makes
 
     plane_list = bitboards_to_array(bitboards)
-    print(plane_list)
-    print(plane_list.shape)
-    plane_list = np.append(plane_list, np.full((8,8), board.turn))
-    print(plane_list)
-    print(plane_list.shape)
+    turn = board.turn * 1
+    plane_list = np.append(plane_list, np.expand_dims(np.full((8,8), turn), axis = 0), axis = 0)
     ## Total move count? No progress count? How to represent?
-
-    plane_list = np.append(plane_list, np.full((8,8), board.castling_rights & chess.BB_H1))
-    plane_list = np.append(plane_list, np.full((8,8), board.castling_rights & chess.BB_A1))
-    plane_list = np.append(plane_listprint(119*8), np.full((8,8), board.castling_rights & chess.BB_H8))
-    plane_list = np.append(plane_list, np.full((8,8), board.castling_rights & chess.BB_A8))
-    return plane_list
+    plane_list = np.append(plane_list, np.expand_dims(np.full((8,8), int(bool(board.castling_rights & chess.BB_H1))), axis = 0), axis = 0)
+    plane_list = np.append(plane_list, np.expand_dims(np.full((8,8), int(bool(board.castling_rights & chess.BB_A1))), axis = 0), axis = 0)
+    plane_list = np.append(plane_list, np.expand_dims(np.full((8,8), int(bool(board.castling_rights & chess.BB_H8))), axis = 0), axis = 0)
+    plane_list = np.append(plane_list, np.expand_dims(np.full((8,8), int(bool(board.castling_rights & chess.BB_A8))), axis = 0), axis = 0)
+    plane_list = np.expand_dims(plane_list, axis =  0)
+    return torch.from_numpy(plane_list).float()
 
 def bitboards_to_array(bb):
     bb = np.asarray(bb, dtype=np.uint64)[:, np.newaxis]
@@ -112,4 +109,14 @@ print("wooohooo")
 #g_list = make_trainSet()
 board = chess.Board()
 converted = convert_for_nn(board)
+print(converted)
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+model = AmnomZero(ResidualLayer, 10, filters = 128).to(device)
+#loss function(s)
+optimizer = torch.optim.Adam(model.parameters(), lr=0.001, betas=(0.9, 0.999), eps=1e-08, weight_decay=0.001, amsgrad=False)
+criterion = CustomLoss()
 print(converted.shape)
+a,b,c = model(converted.to(device), board)
+print(a)
+print(b)
+print(c)

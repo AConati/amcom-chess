@@ -105,31 +105,23 @@ def MCTS(n, verbose=False):
     children = n.children
     if(children == []):
         if n.board.is_game_over():
-            #We need this to be numerical TODO
             result = n.board.result()
             if result[2] == '0':
                 return 1
             if result[2] == '1':
                 return -1
             return 0
+
         else:
             
             moveList = [move for move in n.board.legal_moves]
             prior_p, state_val = fakeNN(n.board)
-            #should this be -1
+            #should this fifty -1
             for x in range(0, len(moveList)):
                 moveToTake = str(moveList[x])
                 temp = n.board.copy()
                 n.board.push_san(moveToTake)
-                try:
-                    node = Node(n.board.copy(), [0, 0, 0, prior_p[x]])
-                except:
-                    # print("PRIORP:  ")
-                    # print(prior_p)
-                    # print("MOVELIST:  ")
-                    # print(moveList)
-                    prior_ps, state_vals = fakeNN(moveList, True)
-                    node = Node(n.board.copy(), [0, 0, 0, prior_p[x]])
+                node = Node(n.board.copy(), [0, 0, 0, prior_p[x]])
                 n.children.append(node)
                 node.parent.append(n)
                 node.prior_p = prior_p[x]
@@ -163,6 +155,10 @@ Returns
 def pickMove(node, maxIter= 1600):
     if node.board.is_game_over():
         result = node.board.result()
+        print(result)
+
+        print(node.board.is_seventyfive_moves())
+        print(node.board.is_insufficient_material())
         if result[2] == '0':   # you win --output looks like 1-0, 0-1, 1/2-1/2
             return 1, 0
         if result[2] == '1':   # you lose
@@ -176,9 +172,6 @@ def pickMove(node, maxIter= 1600):
     for x in range(len(probs)):
         probs[x] = (node.children[x].visit_ct)/node.visit_ct
     #this works and returns the max index dk why tho ask ari
-    if len(probs) == 0:
-        print(node.board)
-        print(node.children)
     index_max = max(range(len(probs)), key=probs.__getitem__)
     bestNode = node.children[index_max]
     return probs, bestNode
@@ -199,11 +192,11 @@ def playGame(maxMoves= 1600, maxIter = 1600):
                 game_states[x].endVal = probs
                 probs *= -1
             break
-        #print(node.board, '\n')
+        print(node.board, '\n')
         game_states.append(GameState(node, probs, 0))
     return game_states
 
 
-# game = playGame(500,10)
-# print(game[-1].node.board)
-# print(game[-1].endVal)
+game = playGame(500,10)
+print(game[-1].node.board)
+print(game[-1].endVal)
