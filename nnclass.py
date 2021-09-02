@@ -22,11 +22,3 @@ class nnClass:
         nnClass = joblib.load(path)
         return nnClass
 
-test = nnClass(1,2,'ah')
-test2 = nnClass(3,3,3)
-print(test.oldNet)
-
-test.saveClass('test', '/home/marco/')
-
-test2 = test2.loadClass('/home/marco/test.pkl')
-print(test2.newNet)

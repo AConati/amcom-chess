@@ -34,11 +34,11 @@ from Nuralnat import AmnomZero, ResidualLayer, CustomLoss
 #-Make function to evaluate latest training loop with function that can be called to make a move with the model in eval mode
 
 
-def get_batch(game_list):
+def get_batch(game_list, batch_size =32):
     if len(game_list) < 100000:
         print('Maybe not the end of the world?: ' + str(len(game_list)))
 
-    random_games = random.sample(game_list, 512)
+    random_games = random.sample(game_list, batch_size)
     return [random.sample(random_games[x], 1) for x in range(0, len(random_games))]
     
 #Neural net expects 119*8*8 stack representation of a board. Make it
@@ -70,11 +70,11 @@ def bitboards_to_array(bb):
     
 # Training set
 # Function to initialize the training loop
-def make_trainSet(samples = 100000):
+def make_trainSet(model, samples = 100000):
     game_list = [] 
     for x in range(0, samples):
         print(x)
-        game_list.append(treesearch.playGame())
+        game_list.append(treesearch.playGame(model))
     return game_list
 
 def train(game_list, num_epochs = 1000):
@@ -85,6 +85,7 @@ def train(game_list, num_epochs = 1000):
         print("Starting epoch: " + str(x+1))
         curBatch = get_batch(game_list)
         #loop each game state
+        loss = 0
         for game_state in curBatch:
             #retrieve endVal(z), mcProb(pi), and board from game state
             endval = game_state.endval
@@ -94,29 +95,14 @@ def train(game_list, num_epochs = 1000):
             nn_board = convert_for_nn(board)
             legal_moves, pout, vout = model(nn_board)
             #find the loss by comparing endVal to vout and mcProb to pout
-            loss = criterion(endVal, vout, mcProb, pout)
+            game_loss = criterion(endVal, vout, mcProb, pout)
+            loss += game_loss
             #zero out past gradients
-            optimizer.zero_grad()
-            #find new gradients created by loss with autograd
-            loss.backward()
-            #use optimizer to step based on gradients
-            optimizer.step()
+        loss = loss/len(curBatch)
+        optimizer.zero_grad()
+        #find new gradients created by loss with autograd
+        loss.backward()
+        #use optimizer to step based on gradients
+        optimizer.step()
 #should have all the data and take one step based on sum of error
 #not step individually
-
-
-print("wooohooo")
-#g_list = make_trainSet()
-board = chess.Board()
-converted = convert_for_nn(board)
-print(converted)
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-model = AmnomZero(ResidualLayer, 10, filters = 128).to(device)
-#loss function(s)
-optimizer = torch.optim.Adam(model.parameters(), lr=0.001, betas=(0.9, 0.999), eps=1e-08, weight_decay=0.001, amsgrad=False)
-criterion = CustomLoss()
-print(converted.shape)
-a,b,c = model(converted.to(device), board)
-print(a)
-print(b)
-print(c)

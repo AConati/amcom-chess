@@ -3,6 +3,7 @@
 import chess
 import random
 import math
+from train import convert_for_nn
 #cpuct controls exploration. 4 is optimal according to this:
 #https://medium.com/oracledevs/lessons-from-alphazero-part-3-parameter-tweaking-4dceb78ed1e5
 cpuct = 4 #wowee this is glooobal
@@ -101,7 +102,7 @@ def betterFakeNN(board):
 
 
 
-def MCTS(n, verbose=False):
+def MCTS(model, n, verbose=False):
     children = n.children
     if(children == []):
         if n.board.is_game_over():
@@ -115,7 +116,10 @@ def MCTS(n, verbose=False):
         else:
             
             moveList = [move for move in n.board.legal_moves]
-            prior_p, state_val = fakeNN(n.board)
+            stack = convert_for_nn(n.board).to('cuda')
+            legal_moves, prior_p, state_val = model(stack, n.board)
+            prior_p = prior_p.detach().to('cpu')
+            state_val = state_val.detach().to('cpu')
             #should this fifty -1
             for x in range(0, len(moveList)):
                 moveToTake = str(moveList[x])
@@ -142,7 +146,7 @@ def MCTS(n, verbose=False):
                 bestChildIndex = x
                 maxQU = nodeQU
         n.visit_ct += 1
-        n.total_val += MCTS(children[bestChildIndex], verbose)
+        n.total_val += MCTS(model, children[bestChildIndex])
         n.mean_val = n.total_val/n.visit_ct
         return n.mean_val
 
@@ -152,13 +156,14 @@ Function: Plays a move using the monteCarlo tresearch
 Inputs
 Returns
 """
-def pickMove(node, maxIter= 1600):
+def pickMove(model, node, maxIter= 1600):
     if node.board.is_game_over():
         result = node.board.result()
         print(result)
-
         print(node.board.is_seventyfive_moves())
         print(node.board.is_insufficient_material())
+        print(node.board.is_fivefold_repetition())
+        print(node.board.is_fifty_moves())
         if result[2] == '0':   # you win --output looks like 1-0, 0-1, 1/2-1/2
             return 1, 0
         if result[2] == '1':   # you lose
@@ -167,7 +172,7 @@ def pickMove(node, maxIter= 1600):
     #Do we just wanna reset each iter?
     #node = Node(board, [0,0,0,0])
     for x in range(maxIter):
-        result = MCTS(node, False)
+        result = MCTS(model, node)
     probs = [0] * len(node.children)
     for x in range(len(probs)):
         probs[x] = (node.children[x].visit_ct)/node.visit_ct
@@ -181,22 +186,25 @@ Function:
 Inputs
 Returns
 """
-def playGame(maxMoves= 1600, maxIter = 1600):
+def playGame(model, maxMoves= 1600, maxIter = 100):
     game_states = []
     board = chess.Board()
     node = Node(board, [0,0,0,0])
     for x in range(maxMoves):
-        probs, node = pickMove(node, maxIter)
+        print(x)
+        print(node.children)
+        print(len(node.children))
+        probs, node = pickMove(model, node, maxIter)
+        
+        print(node.board)
+        print(probs)
+        print(len(probs))
+        
+        print("\n")
         if node == 0:   # game is over
             for x in reversed(range(len(game_states))):
                 game_states[x].endVal = probs
                 probs *= -1
             break
-        print(node.board, '\n')
         game_states.append(GameState(node, probs, 0))
     return game_states
-
-
-game = playGame(500,10)
-print(game[-1].node.board)
-print(game[-1].endVal)
