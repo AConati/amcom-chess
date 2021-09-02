@@ -51,15 +51,22 @@ def convert_for_nn(board, history=1):
     # Still unsure how much difference it makes
 
     plane_list = bitboards_to_array(bitboards)
-    turn = board.turn * 1
-    plane_list = np.append(plane_list, np.expand_dims(np.full((8,8), turn), axis = 0), axis = 0)
+    print(plane_list)
+    print(plane_list.shape)
+    turn_arr = np.full((8,8), board.turn)
+    turn_arr = np.expand_dims(turn_arr, axis=0)
+    plane_list = np.append(plane_list, turn_arr, axis=0)
+    print( np.full((8,8), board.turn))
+    print(plane_list)
+    print(plane_list.shape)
     ## Total move count? No progress count? How to represent?
-    plane_list = np.append(plane_list, np.expand_dims(np.full((8,8), int(bool(board.castling_rights & chess.BB_H1))), axis = 0), axis = 0)
-    plane_list = np.append(plane_list, np.expand_dims(np.full((8,8), int(bool(board.castling_rights & chess.BB_A1))), axis = 0), axis = 0)
-    plane_list = np.append(plane_list, np.expand_dims(np.full((8,8), int(bool(board.castling_rights & chess.BB_H8))), axis = 0), axis = 0)
-    plane_list = np.append(plane_list, np.expand_dims(np.full((8,8), int(bool(board.castling_rights & chess.BB_A8))), axis = 0), axis = 0)
-    plane_list = np.expand_dims(plane_list, axis =  0)
-    return torch.from_numpy(plane_list).float()
+
+    plane_list = np.append(plane_list, np.full((8,8), board.castling_rights & chess.BB_H1))
+    plane_list = np.append(plane_list, np.full((8,8), board.castling_rights & chess.BB_A1))
+    plane_list = np.append(plane_list, np.full((8,8), board.castling_rights & chess.BB_H8))
+    plane_list = np.append(plane_list, np.full((8,8), board.castling_rights & chess.BB_A8))
+    return plane_list
+
 
 def bitboards_to_array(bb):
     bb = np.asarray(bb, dtype=np.uint64)[:, np.newaxis]
